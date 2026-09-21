@@ -15,6 +15,11 @@ public class StudentGradeApp {
         return students.size();
     }
 
+    // Used by the web controller to access all students
+    public List<Student> getStudents() {
+        return students;
+    }
+
     public void displayStudents() {
 
         System.out.println("STUDENT GRADE MANAGEMENT SYSTEM");
