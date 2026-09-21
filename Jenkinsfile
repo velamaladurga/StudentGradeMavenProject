@@ -34,14 +34,40 @@ pipeline {
 
         stage('Deploy') {
             steps {
+
                 bat '''
                 if not exist C:\\StudentGradeDeployment mkdir C:\\StudentGradeDeployment
 
                 copy /Y target\\StudentGradeMavenProject-1.0-SNAPSHOT.jar C:\\StudentGradeDeployment\\
+                '''
 
-                powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name = 'java.exe'\\" | Where-Object { $_.CommandLine -like '*StudentGradeMavenProject-1.0-SNAPSHOT.jar*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+                powershell '''
+                $env:JENKINS_NODE_COOKIE = "student-grade-app"
 
-                powershell -Command "Start-Process java -ArgumentList '-jar C:\\StudentGradeDeployment\\StudentGradeMavenProject-1.0-SNAPSHOT.jar' -WorkingDirectory 'C:\\StudentGradeDeployment' -WindowStyle Hidden"
+                Get-CimInstance Win32_Process -Filter "Name = 'java.exe'" |
+                    Where-Object {
+                        $_.CommandLine -like '*StudentGradeMavenProject-1.0-SNAPSHOT.jar*'
+                    } |
+                    ForEach-Object {
+                        Stop-Process -Id $_.ProcessId -Force
+                    }
+
+                Start-Process `
+                    -FilePath "java.exe" `
+                    -ArgumentList "-jar", "C:\\StudentGradeDeployment\\StudentGradeMavenProject-1.0-SNAPSHOT.jar" `
+                    -WorkingDirectory "C:\\StudentGradeDeployment" `
+                    -WindowStyle Hidden
+                '''
+
+                powershell '''
+                Start-Sleep -Seconds 8
+
+                if (Test-NetConnection localhost -Port 8081 -InformationLevel Quiet) {
+                    Write-Host "Student Grade Application started successfully on port 8081."
+                }
+                else {
+                    Write-Error "Student Grade Application failed to start on port 8081."
+                }
                 '''
             }
         }
@@ -50,6 +76,7 @@ pipeline {
     post {
 
         success {
+
             echo 'Student Grade CI/CD Pipeline completed successfully!'
 
             emailext(
@@ -68,6 +95,7 @@ http://localhost:8081/
         }
 
         failure {
+
             echo 'Student Grade CI/CD Pipeline failed!'
 
             emailext(
