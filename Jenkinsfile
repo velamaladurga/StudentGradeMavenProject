@@ -36,7 +36,12 @@ pipeline {
             steps {
                 bat '''
                 if not exist C:\\StudentGradeDeployment mkdir C:\\StudentGradeDeployment
+
                 copy /Y target\\StudentGradeMavenProject-1.0-SNAPSHOT.jar C:\\StudentGradeDeployment\\
+
+                powershell -Command "Get-CimInstance Win32_Process -Filter \\"Name = 'java.exe'\\" | Where-Object { $_.CommandLine -like '*StudentGradeMavenProject-1.0-SNAPSHOT.jar*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"
+
+                powershell -Command "Start-Process java -ArgumentList '-jar C:\\StudentGradeDeployment\\StudentGradeMavenProject-1.0-SNAPSHOT.jar' -WorkingDirectory 'C:\\StudentGradeDeployment' -WindowStyle Hidden"
                 '''
             }
         }
@@ -54,6 +59,9 @@ pipeline {
 Build Number: ${BUILD_NUMBER}
 Job Name: ${JOB_NAME}
 Status: SUCCESS
+
+Application deployed at:
+http://localhost:8081/
 """,
                 to: "velamaladurga.23.cse@anits.edu.in"
             )
