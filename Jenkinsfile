@@ -31,16 +31,25 @@ pipeline {
                 bat 'mvn package'
             }
         }
+
+        stage('Deploy') {
+            steps {
+                bat '''
+                if not exist C:\\StudentGradeDeployment mkdir C:\\StudentGradeDeployment
+                copy /Y target\\StudentGradeMavenProject-1.0-SNAPSHOT.jar C:\\StudentGradeDeployment\\
+                '''
+            }
+        }
     }
 
     post {
 
         success {
-            echo 'Student Grade CI Pipeline completed successfully!'
+            echo 'Student Grade CI/CD Pipeline completed successfully!'
 
             emailext(
                 subject: "SUCCESS: StudentGradeMavenPipeline #${BUILD_NUMBER}",
-                body: """The Student Grade Maven Pipeline completed successfully.
+                body: """The Student Grade Maven CI/CD Pipeline completed successfully.
 
 Build Number: ${BUILD_NUMBER}
 Job Name: ${JOB_NAME}
@@ -51,11 +60,11 @@ Status: SUCCESS
         }
 
         failure {
-            echo 'Student Grade CI Pipeline failed!'
+            echo 'Student Grade CI/CD Pipeline failed!'
 
             emailext(
                 subject: "FAILED: StudentGradeMavenPipeline #${BUILD_NUMBER}",
-                body: """The Student Grade Maven Pipeline failed.
+                body: """The Student Grade Maven CI/CD Pipeline failed.
 
 Build Number: ${BUILD_NUMBER}
 Job Name: ${JOB_NAME}
